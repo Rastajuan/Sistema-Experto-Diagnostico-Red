@@ -1,128 +1,133 @@
-# Sistema experto para diagnóstico inicial de conectividad de red
+# Rule-based expert system for initial network connectivity diagnosis
 
-Sistema experto **basado en reglas**, desarrollado en Python como ejercicio práctico del módulo **5071 · Modelos de Inteligencia Artificial**, NF2, del Curso de Especialización en Inteligencia Artificial y Big Data (2026–2027).
+**Languages:** **English** | [Español](README.es.md)
 
-El programa guía al usuario a través de comprobaciones de red habituales en Windows y, a partir de las respuestas proporcionadas, propone un **diagnóstico orientativo**. Utiliza una base de conocimiento de **20 reglas (R01–R20)** y un motor de inferencia de **encadenamiento hacia delante**, con una traza legible de las reglas que han contribuido a las conclusiones.
+A **rule-based expert system** built in Python for the **5071 · Artificial Intelligence Models, NF2** module of the 2026–2027 Specialisation Course in Artificial Intelligence and Big Data.
+
+This project guides users through common Windows networking checks and proposes an **initial, indicative diagnosis** based on their answers. Its knowledge base contains **20 rules (R01–R20)**. A **forward-chaining inference engine** derives additional facts and provides a readable trace explaining which rules contributed to the result.
 
 > [!IMPORTANT]
-> **Herramienta educativa, no de diagnóstico definitivo.** No realiza sondas de red por sí sola, no verifica la veracidad de las respuestas y no modifica la configuración del equipo. Una conclusión probable no demuestra por sí sola la causa de una incidencia.
+> **Educational prototype, not a definitive diagnostic tool.** It does not run network probes, independently verify user responses, or change network settings. A probable diagnosis does not establish the actual root cause with certainty.
 
-## Qué permite hacer
+## Features
 
-- Guiar la comprobación de interfaces **Wi-Fi y Ethernet**, dirección **IPv4**, puerta de enlace, comunicación mediante `ping` y resolución de nombres mediante `nslookup`.
-- Aplicar reglas explícitas a hechos introducidos por el usuario y obtener nuevos hechos por encadenamiento hacia delante.
-- Mostrar un diagnóstico inicial, recomendaciones y la **traza de inferencia**, con identificadores de reglas y explicaciones.
-- Distinguir ciertos escenarios habituales: conectividad aparentemente funcional, posible problema de resolución DNS, posible problema de conectividad externa y posible alcance local o general.
-- Detectar contradicciones entre hechos ya conocidos y conclusiones propuestas por las reglas, lanzando una excepción en el motor de inferencia.
+- Guides manual checks involving **Wi-Fi and Ethernet**, **IPv4**, the default gateway, IP reachability with `ping`, and DNS resolution with `nslookup`.
+- Applies explicit rules to user-supplied facts and infers additional facts by forward chaining.
+- Displays an initial diagnosis, recommendations, and an **inference trace** with rule identifiers and explanations.
+- Covers selected cases such as apparently working connectivity, possible DNS failures, possible external connectivity problems, and local versus broader network issues.
+- Detects contradictory assignments to known facts and raises an exception rather than silently overriding them.
 
-## Arquitectura
+## Architecture
 
 ```text
 src/
-  sistema_experto_red.py    # Interacción, validación de respuestas y presentación
-  reglas.py                 # Base de conocimiento R01–R20
-  motor_inferencia.py       # Evaluación de condiciones, inferencias y traza
+  sistema_experto_red.py       # User interaction, input validation, results
+  reglas.py                    # Knowledge base: rules R01–R20
+  motor_inferencia.py          # Rule evaluation, forward chaining, trace
 pruebas/
-  prueba_motor_inferencia.py  # Comprobaciones automatizadas del motor y reglas
-README.md
-LICENSE
-requirements.txt
+  prueba_motor_inferencia.py   # Automated rule and engine checks
+README.md                      # English documentation
+README.es.md                   # Documentación en español
+LICENSE                        # MIT licence
+requirements.txt               # Intentionally empty
 .gitignore
 ```
 
-**Separación de responsabilidades:** `reglas.py` describe el conocimiento del dominio; `motor_inferencia.py` evalúa condiciones y aplica conclusiones sin codificar conceptos específicos de redes; `sistema_experto_red.py` solicita los datos y comunica el resultado. Los hechos se almacenan en un diccionario y las reglas se reevalúan hasta que una pasada completa no añade nuevos hechos.
+The responsibilities are deliberately separated: `reglas.py` represents domain knowledge; `motor_inferencia.py` evaluates conditions and applies conclusions without embedding networking-specific concepts; `sistema_experto_red.py` collects answers and presents the diagnosis. A Python dictionary acts as working memory. Rule evaluation continues until a complete pass adds no new facts.
 
-## Requisitos
+## Requirements
 
-- **Python 3.13** (versión usada en el entorno de desarrollo). El código emplea únicamente la **biblioteca estándar** de Python; no requiere instalar paquetes de terceros.
-- Terminal interactiva para introducir respuestas.
-- Entorno Windows para seguir las comprobaciones guiadas descritas en la interfaz. Las pruebas automatizadas del motor no requieren Windows.
+- **Python 3.13**, used during development. Only the Python **standard library** is required; there are no third-party dependencies.
+- An interactive terminal for providing answers.
+- Windows for following the manual networking instructions supplied by the interface. The inference-engine tests do not require Windows.
 
-El archivo `requirements.txt` está vacío **intencionadamente**, porque no hay dependencias externas. Para una instalación más reproducible se recomienda utilizar un entorno virtual, aunque no es obligatorio.
+`requirements.txt` is intentionally empty. A virtual environment is recommended for reproducibility but not required.
 
-## Ejecución en Windows (PowerShell)
+## Run on Windows (PowerShell)
 
-Desde la carpeta raíz del proyecto:
+From the repository root:
 
 ```powershell
 py -3.13 -m venv .venv
 .\.venv\Scripts\python.exe -m src.sistema_experto_red
 ```
 
-El asistente formula preguntas sobre el estado de la conexión. Cuando se ofrece la opción `?`, muestra ayuda con comprobaciones que puedes realizar manualmente. Introduce respuestas que representen los resultados observados: **el programa no ejecuta esos comandos por ti**.
-
-Si ya tienes un entorno Python compatible activado, también puedes iniciar la aplicación mediante:
+Alternatively, if a compatible Python environment is already activated:
 
 ```powershell
 python -m src.sistema_experto_red
 ```
 
-## Ejemplo: resolución DNS
+The interactive application asks about observed network behaviour. When a `?` help option is offered, it explains how to perform the corresponding check **manually**. The program **does not run those commands itself**.
 
-Escenario ilustrativo:
+**Language note:** the interactive interface, its prompts and the inference trace are written in Spanish. English documentation does not imply an English-localised application.
 
-1. La interfaz Wi-Fi está conectada y la puerta de enlace responde.
-2. Hay respuesta al `ping` de una IP pública.
-3. La consulta DNS del dominio de prueba falla.
-4. El motor aplica una secuencia de reglas que incluye **R15**, y presenta un **posible problema de resolución DNS**, con la recomendación de revisar los servidores DNS configurados y repetir las pruebas.
+## Example: a possible DNS issue
 
-**Interpretación:** este patrón apunta a una incidencia DNS, pero no prueba cuál es su causa concreta. Una prueba de `ping` tampoco acredita por sí sola el funcionamiento de todos los protocolos de red.
+An illustrative scenario:
 
-## Pruebas
+1. The Wi-Fi interface is connected, and the default gateway responds.
+2. A public IP address responds to `ping`.
+3. DNS lookup for the test domain fails.
+4. The inference engine activates a sequence of rules, including **R15**, identifies a **possible DNS resolution problem**, and recommends checking configured DNS servers and repeating name-resolution tests.
 
-Desde la raíz del proyecto:
+**Interpretation:** this combination suggests a DNS-related issue but does not identify the exact underlying cause. A successful or failed ICMP `ping` does not, on its own, establish the state of every network protocol.
+
+## Automated tests
+
+Run from the repository root:
 
 ```powershell
 python -m pruebas.prueba_motor_inferencia
 ```
 
-El conjunto actual realiza **21 comprobaciones automatizadas**: una por cada regla R01–R20 y una sobre detección de conflicto de conocimiento. Se basan en hechos de prueba y comprueban las conclusiones y la traza esperadas.
+The suite contains **21 automated checks**: one for each of the 20 rules and one for conflicting facts. It supplies predefined facts and checks expected conclusions and inference traces.
 
-**Resultado de auditoría de esta entrega:** 21 comprobaciones satisfactorias, ejecutadas en el entorno de revisión con Python 3.13.5; código fuente sin cambios funcionales. Este resultado confirma los casos programados, **no** una cobertura completa de redes reales, ni equivale a pruebas de integración en todos los sistemas Windows.
+**Recorded audit result:** **21/21 passed**, using Python 3.13.5 in the review environment, without functional code changes. This verifies the programmed scenarios only. It does **not** establish complete coverage, real-world diagnostic accuracy, or compatibility with every Windows environment.
 
-## Alcance, limitaciones y sesgos
+## Scope, limitations and knowledge-selection bias
 
-| Aspecto | Límite conocido | Consecuencia |
+| Area | Known limitation | Practical consequence |
 | --- | --- | --- |
-| **Datos de entrada** | Las respuestas son proporcionadas manualmente por el usuario. | Una respuesta incorrecta puede producir una inferencia inapropiada. |
-| **Cobertura del conocimiento** | Las 20 reglas representan un conjunto acotado de incidencias frecuentes. | Un caso no previsto puede quedar sin diagnóstico adecuado. |
-| **Protocolos** | El flujo está centrado en **IPv4**, Wi-Fi/Ethernet, ICMP y resolución DNS básica. | No evalúa de forma específica escenarios IPv6, proxies, cortafuegos, rutas complejas o fallos por aplicación. |
-| **Prueba ICMP** | La ausencia de respuesta a `ping` puede deberse a filtrado u otras restricciones. | No debe interpretarse automáticamente como ausencia de Internet. |
-| **Cobertura de pruebas** | Se verifican 20 reglas y la detección de conflictos con casos diseñados. | No se demuestra ausencia de defectos ni precisión diagnóstica en campo. |
-| **Conflictos** | El motor informa de contradicciones mediante `ValueError`. | No dispone de un sistema avanzado de resolución o priorización de reglas. |
+| Inputs | Users enter results manually; answers are not verified. | Incorrect answers may lead to inappropriate inferences. |
+| Knowledge coverage | Only 20 selected rules are implemented. | Unrepresented faults may not receive a suitable diagnosis. |
+| Protocols | Focuses on IPv4, Wi-Fi/Ethernet, ICMP and basic DNS. | No dedicated analysis of IPv6, proxies, firewalls, complex routes or application-specific problems. |
+| ICMP checks | No reply to `ping` may result from filtering. | A failed ping is not proof that Internet access is unavailable. |
+| Tests | A fixed set of rule scenarios and one conflict scenario is checked. | Passing tests does not prove defect-free behaviour or field accuracy. |
+| Conflicts | Contradictions raise `ValueError`. | There is no advanced rule prioritisation or conflict-resolution strategy. |
 
-### Sesgo de selección del conocimiento
+### Knowledge-selection bias
 
-La base de reglas refleja las situaciones escogidas durante el diseño y **prioriza ciertas incidencias IPv4**. No utiliza aprendizaje automático ni datos de entrenamiento; por tanto, su sesgo principal no es estadístico por un conjunto de entrenamiento, sino de **selección y representación de reglas**. Las situaciones menos representadas pueden recibir un análisis incompleto. Para reducir este sesgo sería necesario revisar el conocimiento con especialistas y probar una mayor diversidad de escenarios.
+This system is **not trained on datasets**. Its main potential bias comes from **which situations and rules were selected during design**: common IPv4 connectivity problems receive more attention than other scenarios. This can produce incomplete assessments for cases outside that coverage. Better coverage would require expert review, updated technical references and a wider range of test scenarios.
 
-## Seguridad y privacidad
+## Safety and privacy
 
-- El programa **no cambia** adaptadores, rutas ni servidores DNS.
-- No ejecuta automáticamente comandos de red ni solicita credenciales.
-- Su propósito es **orientar** comprobaciones manuales y ayudar a razonar sobre resultados; las recomendaciones deben verificarse antes de aplicar cualquier cambio real.
-- Al compartir incidencias o salidas en un repositorio público, evita publicar direcciones IP internas, nombres de host, información personal o configuraciones sensibles de terceros.
+- Does **not** change network adapters, routes, DNS servers or other system settings.
+- Does **not** automatically run network commands or request credentials.
+- Offers guidance only; recommendations must be evaluated before making actual changes.
+- When sharing logs or cases publicly, remove internal IP addresses, hostnames, personal information and other parties' sensitive configuration details.
 
-## Posibles mejoras
+## Future work (not implemented)
 
-- Ampliar las reglas para IPv6 y otros escenarios de red.
-- Añadir pruebas de integración e historiales de casos reales anonimizados.
-- Introducir prioridades o mecanismos controlados de resolución de conflictos.
-- Mejorar la validación y la presentación estructurada de resultados.
+- Extend the knowledge base to IPv6 and other networking scenarios.
+- Add integration tests and anonymised real-world cases.
+- Introduce explicit priorities and controlled conflict resolution.
+- Improve structured result reporting and validation.
 
-Estas mejoras son **líneas futuras**, no funcionalidades existentes.
+These are **potential improvements**, not existing features.
 
-## Autoría y contexto
+## Authorship and project context
 
-**Juan Bello Fernández.** Proyecto académico de aprendizaje sobre representación del conocimiento, sistemas basados en reglas y razonamiento explicable.
+**Juan Bello Fernández.** Academic practice project exploring knowledge representation, rule-based reasoning, modular architecture and explainable inferences.
 
-## Desarrollo y uso de IA generativa
+## Generative AI disclosure
 
-Durante el aprendizaje, la programación, las pruebas y la documentación se utilizó **ChatGPT como herramienta de apoyo** para comprender conceptos, revisar la lógica de las reglas, depurar errores, preparar comprobaciones y mejorar explicaciones. El proyecto se desarrolló mediante un proceso iterativo de revisión y ejecución; su publicación no implica que todos los textos o fragmentos se hayan redactado sin asistencia. El autor asume la responsabilidad de revisar, mantener y presentar el material publicado.
+**ChatGPT was used as a supporting tool** for learning, reviewing rule logic, debugging, preparing tests and improving documentation. Development involved iterative review and execution; publication does not imply that every line of text or code was produced without AI assistance. The author remains responsible for the published work, its interpretation and maintenance.
 
-## Licencia
+## Licence
 
-**MIT License.** Copyright (c) 2026 Juan Bello Fernández.
+**MIT License. Copyright (c) 2026 Juan Bello Fernández.**
 
-Se permite usar, copiar, modificar, distribuir y reutilizar el código, también con fines comerciales, conforme a las condiciones del archivo [LICENSE](LICENSE). **En las copias o partes sustanciales del software debe conservarse el aviso de copyright y el texto de la licencia MIT.** La licencia no exige citar al autor en la interfaz de una aplicación derivada ni publicar las modificaciones realizadas.
+The code may be used, copied, modified and redistributed, including commercially, subject to the conditions in [LICENSE](LICENSE). Copies or substantial portions of the software must retain the copyright notice and MIT licence text. MIT does not require visible attribution in a derived application's user interface or publication of modifications.
 
-El software se proporciona **sin garantía** y no debe considerarse una herramienta de diagnóstico profesional certificada. Esta licencia se aplica al contenido del repositorio publicado; no otorga derechos sobre marcas, materiales o servicios de terceros.
+The software is provided **without warranty** and is **not a certified professional network diagnostic tool**. The licence covers the content released in this repository and does not grant rights to third-party trademarks, services or materials.
